@@ -1,10 +1,12 @@
 def count1(barr):
     return sum(bin(x).count("1") for x in barr)
 
+# Checks if number of set bits fall within range
 def fips1(k):
     v = count1(k)
     return 9725 < v < 10275
 
+# Checks if numbers of series of consecutive bits of given lengths fall within ranges
 def fips2(k):
     v = [0] * 6
     ranges = (
@@ -30,6 +32,7 @@ def fips2(k):
     ans = [a < x < b for (x, (a, b)) in zip(v, ranges)]
     return all(ans)
 
+# Checks if there is no series of consecutive 0s/1s longer than 25 bits
 def fips3(k):
     s = 0
     max_0 = 0
@@ -61,6 +64,7 @@ def fips3(k):
 
     return max_0 < 26 and max_1 < 26
 
+# "Poker test"
 def fips4(k):
     v = [0] * 16
     for b in k:
