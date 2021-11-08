@@ -1,9 +1,11 @@
+#!/bin/env python3
 from functools import reduce
 import random
 from fractions import Fraction
+import argparse
 
 def frac(f):
-    return str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}"
+    return str(f) if not isinstance(f, Fraction) else (str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}")
 
 
 def polynomial(coef):
@@ -16,12 +18,15 @@ def polynomial(coef):
 def print_iter(fmt, vals):
     print(*(fmt % v for v in vals), sep="\n", end="\n\n")
 
+def print_shares(shares):
+    print_iter("(x%d, y%d) = (%d, %d)", ((i, i, sh[0], sh[1]) for i, sh in enumerate(shares)))
+
 prod = lambda xx: reduce(int.__mul__, xx)
 
 def shamir_split(n, t, s, p, verbose=True, aa=None):
     if not aa:
         aa = [random.randint(2, p) for _ in range(t-1)]
-    a = [s, *aa] #*aa[:t-1]]
+    a = [s, *aa[:t-1]]
 
     if verbose:
         print_iter("%10s: %d", (
@@ -42,6 +47,18 @@ def shamir_split(n, t, s, p, verbose=True, aa=None):
 
     return list(zip(xx, yy))
 
+def to_int_mod(f: Fraction, p):
+    n, d = f.numerator, f.denominator
+    if d == 1:
+        return n % p
+    elif p % d == 0:
+        return n / d % p
+    n1 = n
+    while n1 % d:
+        n1 += p
+    r = (n1 // d) % p
+    return r
+
 
 
 def shamir_reconstruct(shares, p, verbose=True):
@@ -49,9 +66,8 @@ def shamir_reconstruct(shares, p, verbose=True):
     sx, sy = zip(*shares)
 
     if verbose:
-        print("Shares:")
-        print_iter("(x%d, y%d) = (%d, %d)", ((i, i, sh[0], sh[1]) for i, sh in enumerate(shares)))
-
+        print("Chosen shares:")
+        print_shares(shares)
 
     l_const_term = lambda i: Fraction(
             prod((      - sx[j] for j in range(t) if i != j)),
@@ -64,22 +80,46 @@ def shamir_reconstruct(shares, p, verbose=True):
         print("Constant terms:")
         print_iter("l%d_0 = %s", ((i, frac(lc[i])) for i in range(t)))
 
-    print(sy)
-    tt = [y*l for (y,l) in zip(sy, lc)]
-    print(*[frac(t) for t in tt], sep=" + ")
+    tt = [to_int_mod(y*l, p) for (y,l) in zip(sy, lc)]
     return sum(tt) % p
 
 def demo():
     random.seed(1337)
-    n = 6
-    t = 3
-    s = 1234
-    p = 1523
 
-    all_shares = shamir_split(n, t, s, p, aa=[166, 94])
+    par = argparse.ArgumentParser()
+    par.add_argument('-n', type=int, help='number of shares', default=4)
+    par.add_argument('-t', type=int, help='number of shares required', default=3)
+    par.add_argument('-s', type=int, help='secret', default=954)
+    par.add_argument('-p', type=int, help='prime', default=1523)
+    par.add_argument('-a', nargs='+', type=int, help='polynomial coefficients')
+    par.add_argument('-A', action='store_const', help='use default polynomial coefficients', const=[352, 62])
+    par.add_argument('-r', nargs='+', type=str, help='shares to reconstruct from')
+    par.add_argument('-g', action='store_true', help='only generate shares')
 
-    # shares = sorted(random.sample(all_shares, k=t))
-    shares = [all_shares[i] for i in (1, 3, 4)]
+    args = par.parse_args()
+
+    n = args.n
+    t = args.t
+    s = args.s
+    p = args.p
+    aa = args.a if args.a else args.A
+
+    if args.g or not args.r:
+        all_shares = shamir_split(n, t, s, p, aa=aa)
+        print("All shares:")
+        print_shares(all_shares)
+        print(*(f"{x},{y}" for x,y in all_shares), end="\n\n")
+        if args.g:
+            return
+
+
+    if args.r:
+        shares = [tuple([int(x) for x in y.split(",")]) for y in args.r]
+    else:
+        shares = sorted(random.sample(all_shares, k=t)) if not args.r else args.r
+
+
+    # shares = [all_shares[i] for i in (1, 3, 4)]
     secret = shamir_reconstruct(shares, p)
 
     print(f"Secret: {secret}")
