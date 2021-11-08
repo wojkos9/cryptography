@@ -3,10 +3,10 @@ from functools import reduce
 import random
 from fractions import Fraction
 import argparse
+from utils import to_int_mod
 
 def frac(f):
     return str(f) if not isinstance(f, Fraction) else (str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}")
-
 
 def polynomial(coef):
     x2n = lambda n: "" if n == 0 else ("x" if n == 1 else f"x^{n}")
@@ -46,18 +46,6 @@ def shamir_split(n, t, s, p, verbose=True, aa=None):
     yy = [f(i) for i in xx]
 
     return list(zip(xx, yy))
-
-def to_int_mod(f: Fraction, p):
-    n, d = f.numerator, f.denominator
-    if d == 1:
-        return n % p
-    elif p % d == 0:
-        return n / d % p
-    n1 = n
-    while n1 % d:
-        n1 += p
-    r = (n1 // d) % p
-    return r
 
 
 

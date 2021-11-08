@@ -8,13 +8,6 @@ from utils import ellipsis
 
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-img = io.imread(f"{DIR}/lena.png")
-
-maxbits = reduce(lambda x,y: x*y, img.shape) - 32
-
-msg = "Hello, this is a secret message!!!"
-m_len = len(msg) * 8
-msg = msg * (maxbits // m_len)
 
 # Encodes a message in an image, prepended by 32 bits of message length
 def steg_enc(img: np.ndarray, msg: bytes):
@@ -58,24 +51,34 @@ def steg_dec(img: np.ndarray):
     size = struct.unpack("<I", dec_n_bytes(gen, 4))[0]
     return dec_n_bytes(gen, size)
 
-fig, axes = plt.subplots(1, 3)
-
-ax = (a for a in axes)
-
-with_secret = steg_enc(img, msg.encode('ascii'))
-
-def show(x: plt.Axes):
+def show(x: plt.Axes, title=""):
     a = next(ax)
+    a.set_title(title)
     a.imshow(x, cmap='gray')
 
 
-show(img)
-show(with_secret)
-show(img != with_secret)
+fig, axes = plt.subplots(1, 3)
+ax = (a for a in axes)
 
+img = io.imread(f"{DIR}/lena.png")
+
+msg = "Hello, this is a secret message!!!"
+maxbits = reduce(lambda x,y: x*y, img.shape) - 32
+m_len = len(msg) * 8
+msg = msg * (maxbits // m_len)
+
+with_secret = steg_enc(img, msg.encode('ascii'))
+
+
+
+show(img, "Original")
+show(with_secret, "With secret")
+show(img != with_secret, "Altered pixels")
+
+decoded_secret = steg_dec(with_secret).decode('ascii')
+
+fig.suptitle("Secret: " + ellipsis(decoded_secret) + f" (len = {len(decoded_secret)})")
 
 plt.show()
 
-secret = steg_dec(with_secret).decode('ascii')
-
-print(ellipsis(secret))
+print(ellipsis(decoded_secret))

@@ -34,7 +34,7 @@ def genkey_if_needed(m = 20000):
         with open(KEYFILE, "rb") as f:
             k = f.read()
     else:
-        print("Generating new key...")
+        print(f"Generating new {m}-bit key...")
         k = genkey(m)
         with open(KEYFILE, "wb") as f:
             f.write(k)
