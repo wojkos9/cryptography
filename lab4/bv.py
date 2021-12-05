@@ -44,11 +44,11 @@ class BitWriter:
         self.x = ''
         self.tl = 0
 
-    def put(self, v, n, mode=0):
+    def put(self, v, n):
         s = bin(v)[2:]
         if len(s) > n:
             raise Exception()
-        s = s.zfill(n) if mode == 0 else s + '0' * (n-len(s))
+        s = s.zfill(n)
         if self.x:
             self.b.pop()
         x = self.x + s
@@ -67,6 +67,9 @@ class BitWriter:
 
     def str(self):
         return bufs(self.b)
+
+    def getbuf(self):
+        return bytes(self.b)
 
 def bufs(buf, sep=""):
     return sep.join(bin(x)[2:].zfill(8) for x in buf)

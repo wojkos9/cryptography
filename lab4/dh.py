@@ -48,4 +48,4 @@ def mkagent(name, comm: Connection):
 alice = mkagent("A", comm_a)
 bob = mkagent("B", comm_b)
 
-[alice, bob][not fork()]()
+[alice, bob][fork() == 0]()
