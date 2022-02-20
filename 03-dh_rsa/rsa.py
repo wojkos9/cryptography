@@ -1,4 +1,4 @@
-from bv import BitReader, BitWriter
+from bitvector import BitReader, BitWriter
 import math
 import random
 

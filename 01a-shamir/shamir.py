@@ -1,4 +1,3 @@
-#!/bin/env python3
 from functools import reduce
 import random
 from fractions import Fraction
